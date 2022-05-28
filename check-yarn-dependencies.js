@@ -102,6 +102,7 @@ const listDependencies = () => {
 
   const devDependencies = Object.keys(packageJson.devDependencies || {});
   const dependencies = Object.keys(packageJson.dependencies || {});
+  // TODO: use promises to parallelize the checks
   dependencies.forEach((dependency) => {
     checkForNewVersion(dependency, "dependencies");
   });
