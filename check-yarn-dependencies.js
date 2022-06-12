@@ -4,6 +4,7 @@ const { exit } = require("process");
 const util = require("util");
 const exec = util.promisify(require("child_process").exec);
 
+ONE_DAY_IN_MILLISECONDS = 1000 * 60 * 60 * 24;
 WARNING_DAYS_THRESHOLD = 30;
 ALERT_DAYS_THRESHOLD = 60;
 COLOR_GREY = "\x1b[0m";
@@ -14,14 +15,17 @@ const daysSince = (installedTimestamp, latestTimestamp) => {
   const installedDate = new Date(installedTimestamp);
   const latestDate = new Date(latestTimestamp);
   const diff = latestDate.getTime() - installedDate.getTime();
-  return Math.floor(diff / (1000 * 60 * 60 * 24));
+  return Math.floor(diff / ONE_DAY_IN_MILLISECONDS);
 };
 
 const checkForNewVersion = async (dependencyName, category) => {
   const { stdout, stderr } = await exec(`yarn info '${dependencyName}' --json`);
   if (stderr) {
-    console.error(stderr);
-    exit(1);
+    console.error(
+      `${COLOR_RED}> ${category} '${dependencyName}' error:${COLOR_GREY}`,
+      stderr
+    );
+    return;
   }
 
   const dependencyPackageFilePath = path.join(
@@ -32,8 +36,10 @@ const checkForNewVersion = async (dependencyName, category) => {
   );
 
   if (!fs.existsSync(dependencyPackageFilePath)) {
-    console.error(`Path not found: ${dependencyPackageFilePath}`);
-    exit(1);
+    console.error(
+      `${COLOR_RED}> ${category} '${dependencyName}' Path not found: '${dependencyPackageFilePath}'${COLOR_GREY}`
+    );
+    return;
   }
 
   let installedVersion;
@@ -42,8 +48,11 @@ const checkForNewVersion = async (dependencyName, category) => {
       fs.readFileSync(dependencyPackageFilePath)
     ).version;
   } catch (err) {
-    console.error(err);
-    exit(1);
+    console.error(
+      `${COLOR_RED}> ${category} '${dependencyName}' Error reading '${dependencyPackageFilePath}':${COLOR_GREY}`,
+      err
+    );
+    return;
   }
 
   const dependencyInfo = JSON.parse(stdout).data;
