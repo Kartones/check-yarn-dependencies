@@ -47,9 +47,9 @@ const checkForNewVersion = async (dependencyName, category) => {
   }
 
   const dependencyInfo = JSON.parse(stdout).data;
-  const latestVersion = dependencyInfo["dist-tags"]
-    ? dependencyInfo["dist-tags"].latest
-    : dependencyInfo.versions[dependencyInfo.versions.length - 1];
+  const latestVersion =
+    dependencyInfo["dist-tags"]?.latest ??
+    dependencyInfo.versions[dependencyInfo.versions.length - 1];
   dependencyData = {
     name: dependencyName,
     category: category,
@@ -100,15 +100,22 @@ const listDependencies = () => {
     exit(1);
   }
 
-  const devDependencies = Object.keys(packageJson.devDependencies || {});
-  const dependencies = Object.keys(packageJson.dependencies || {});
-  // TODO: use promises to parallelize the checks
-  dependencies.forEach((dependency) => {
-    checkForNewVersion(dependency, "dependencies");
-  });
-  devDependencies.forEach((dependency) => {
-    checkForNewVersion(dependency, "devDependencies");
-  });
+  const allDependencies = [
+    ...Object.keys(packageJson.devDependencies ?? {}).map((dependencyName) => [
+      dependencyName,
+      "devDependencies",
+    ]),
+    ...Object.keys(packageJson.dependencies ?? {}).map((dependencyName) => [
+      dependencyName,
+      "dependencies",
+    ]),
+  ];
+
+  Promise.all(
+    allDependencies.map(([dependencyName, category]) =>
+      checkForNewVersion(dependencyName, category)
+    )
+  );
 };
 
 listDependencies();
