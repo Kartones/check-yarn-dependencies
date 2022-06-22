@@ -1,5 +1,7 @@
 ## Intro
 
+Note: While not exactly the same, [`yarn outdated`](https://classic.yarnpkg.com/lang/en/docs/cli/outdated/) provides already very relevant version information.
+
 Node script to check `package.json`'s `dependencies` and `devDependencies` and list those outdated.
 
 Sample output:
